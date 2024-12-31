@@ -4,46 +4,58 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 from flask_cors import CORS
+import io
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Update this path to your model location
 model_path = r"C:\Users\User\Downloads\skin_cancer_final_model.h5"
 model = load_model(model_path)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
+    print("Received prediction request")
+    print("Request files:", request.files)
+    print("Request headers:", dict(request.headers))
+    
+    try:
+        if 'image' not in request.files:
+            print("No image file in request. Available files:", list(request.files.keys()))
+            return jsonify({'error': 'No image provided'}), 400
 
-    file = request.files['image']
-    img = Image.open(file.stream).convert('RGB')
-    img = img.resize((224, 224))  # Resize to match model's expected input
-    img_array = np.array(img)/255.0
-    img_array = np.expand_dims(img_array, axis=0)
+        file = request.files['image']
+        print(f"Received file: {file.filename}")
 
-    predictions = model.predict(img_array)
-    predicted_class = np.argmax(predictions)
-    confidence = float(np.max(predictions))
+        # Read image from memory
+        image_bytes = file.read()
+        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        img = img.resize((224, 224))
+        img_array = np.array(img)/255.0
+        img_array = np.expand_dims(img_array, axis=0)
 
-    # Map the predicted class to the corresponding skin condition
-    conditions = [
-        'Actinic Keratoses',
-        'Basal Cell Carcinoma',
-        'Benign Keratosis',
-        'Dermatofibroma',
-        'Melanoma',
-        'Melanocytic Nevi',
-        'Vascular Lesions'
-    ]
+        predictions = model.predict(img_array)
+        predicted_class = np.argmax(predictions)
+        confidence = float(np.max(predictions))
 
-    return jsonify({
-        'predicted_class': conditions[predicted_class],
-        'confidence': confidence
-    })
+        conditions = [
+            'Actinic Keratoses',
+            'Basal Cell Carcinoma',
+            'Benign Keratosis',
+            'Dermatofibroma',
+            'Melanoma',
+            'Melanocytic Nevi',
+            'Vascular Lesions'
+        ]
+
+        return jsonify({
+            'predicted_class': conditions[predicted_class],
+            'confidence': confidence
+        })
+
+    except Exception as e:
+        print(f"Error during prediction: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print("Starting Flask server...")
-    print("Access the API at http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True) 

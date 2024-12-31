@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import ReportService from '../services/reportService';
 
 const ImageAnalysis = () => {
   const { isDarkMode } = useTheme();
@@ -7,6 +8,7 @@ const ImageAnalysis = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const fileInputRef = useRef(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -47,34 +49,86 @@ const ImageAnalysis = () => {
 
   const analyzeImage = async (image) => {
     try {
-      // Update status to analyzing
       setImages(prev => prev.map(img => 
         img.url === image.url ? { ...img, status: 'analyzing' } : img
       ));
 
-      // TODO: Replace with your actual API endpoint
       const formData = new FormData();
       formData.append('image', image.file);
-      
+
+      console.log('Sending image for analysis:', image.file.name);
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
         body: formData
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
-      
-      // Update status to completed
-      setImages(prev => prev.map(img => 
-        img.url === image.url ? { ...img, status: 'completed', analysis: result } : img
-      ));
+      console.log('Analysis result:', result);
+
+      if (!result.condition) {
+        throw new Error('Invalid response from analysis');
+      }
 
       setAnalysis(result);
+      setImages(prev => prev.map(img => 
+        img.url === image.url ? { ...img, status: 'completed' } : img
+      ));
     } catch (error) {
       console.error('Analysis failed:', error);
-      // Update status to error
       setImages(prev => prev.map(img => 
         img.url === image.url ? { ...img, status: 'error' } : img
       ));
+      setAnalysis({
+        condition: 'Error',
+        confidence: null,
+        riskLevel: 'Unknown',
+        recommendations: 'An error occurred during analysis. Please try again.'
+      });
+    }
+  };
+
+  const handleGenerateReport = async (analysisResult) => {
+    try {
+      setIsGeneratingReport(true);
+      
+      const patientInfo = {
+        name: 'John Doe', // This should come from user authentication
+        email: 'john@example.com' // This should come from user authentication
+      };
+
+      await ReportService.generateReport(analysisResult, patientInfo);
+      
+      // Show success message
+      alert('Report has been sent to your email!');
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      alert('Failed to generate report. Please try again.');
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const getConfidenceColor = (confidence, isDarkMode) => {
+    if (confidence >= 80) return isDarkMode ? '#34D399' : '#059669';
+    if (confidence >= 60) return isDarkMode ? '#FBBF24' : '#D97706';
+    return isDarkMode ? '#EF4444' : '#DC2626';
+  };
+
+  const getRiskLevelColor = (riskLevel, isDarkMode) => {
+    switch (riskLevel) {
+      case 'High':
+        return isDarkMode ? '#EF4444' : '#DC2626';
+      case 'Medium':
+        return isDarkMode ? '#FBBF24' : '#D97706';
+      case 'Low':
+        return isDarkMode ? '#34D399' : '#059669';
+      default:
+        return isDarkMode ? '#A0AEC0' : '#4A5568';
     }
   };
 
@@ -196,25 +250,156 @@ const ImageAnalysis = () => {
       {analysis && (
         <div style={{
           marginTop: '2rem',
-          padding: '1.5rem',
+          padding: '2rem',
           backgroundColor: isDarkMode ? 'rgba(45, 55, 72, 0.5)' : 'white',
-          borderRadius: '0.75rem',
+          borderRadius: '1rem',
+          boxShadow: isDarkMode ? '0 4px 6px rgba(0, 0, 0, 0.2)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <h3 style={{
             color: isDarkMode ? '#e2e8f0' : '#2d3748',
-            marginBottom: '1rem'
+            marginBottom: '1.5rem',
+            fontSize: '1.5rem',
+            fontWeight: '600'
           }}>
             Analysis Results
           </h3>
-          <pre style={{
-            color: isDarkMode ? '#a0aec0' : '#4a5568',
-            overflow: 'auto'
-          }}>
-            {JSON.stringify(analysis, null, 2)}
-          </pre>
+          
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {/* Condition Card */}
+            <div style={{
+              padding: '1.5rem',
+              backgroundColor: isDarkMode ? 'rgba(45, 55, 72, 0.7)' : '#f7fafc',
+              borderRadius: '0.75rem',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '1.5rem' }}>🔍</span>
+                <h4 style={{ color: isDarkMode ? '#e2e8f0' : '#2d3748', margin: 0 }}>Detected Condition</h4>
+              </div>
+              <p style={{ 
+                color: isDarkMode ? '#60a5fa' : '#3b82f6', 
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                margin: '0.5rem 0' 
+              }}>
+                {analysis.condition}
+              </p>
+            </div>
+
+            {/* Confidence and Risk Level */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{
+                padding: '1.5rem',
+                backgroundColor: isDarkMode ? 'rgba(45, 55, 72, 0.7)' : '#f7fafc',
+                borderRadius: '0.75rem',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>📊</span>
+                  <h4 style={{ color: isDarkMode ? '#e2e8f0' : '#2d3748', margin: 0 }}>Confidence</h4>
+                </div>
+                <p style={{ 
+                  color: getConfidenceColor(analysis.confidence, isDarkMode),
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  margin: '0.5rem 0'
+                }}>
+                  {analysis.confidence}%
+                </p>
+              </div>
+
+              <div style={{
+                padding: '1.5rem',
+                backgroundColor: isDarkMode ? 'rgba(45, 55, 72, 0.7)' : '#f7fafc',
+                borderRadius: '0.75rem',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                  <h4 style={{ color: isDarkMode ? '#e2e8f0' : '#2d3748', margin: 0 }}>Risk Level</h4>
+                </div>
+                <p style={{ 
+                  color: getRiskLevelColor(analysis.riskLevel, isDarkMode),
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  margin: '0.5rem 0'
+                }}>
+                  {analysis.riskLevel}
+                </p>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div style={{
+              padding: '1.5rem',
+              backgroundColor: isDarkMode ? 'rgba(45, 55, 72, 0.7)' : '#f7fafc',
+              borderRadius: '0.75rem',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '1.5rem' }}>💡</span>
+                <h4 style={{ color: isDarkMode ? '#e2e8f0' : '#2d3748', margin: 0 }}>Recommendations</h4>
+              </div>
+              <p style={{ 
+                color: isDarkMode ? '#a0aec0' : '#4a5568',
+                margin: '0.5rem 0',
+                lineHeight: '1.5'
+              }}>
+                {analysis.recommendations}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => handleGenerateReport(analysis)}
+            disabled={isGeneratingReport}
+            style={{
+              marginTop: '1.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: isGeneratingReport ? '#9CA3AF' : '#3B82F6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: isGeneratingReport ? 'default' : 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '1rem',
+              fontWeight: '500'
+            }}
+          >
+            {isGeneratingReport ? (
+              <>
+                <span>Generating Report...</span>
+                <div className="spinner" />
+              </>
+            ) : (
+              <>
+                <span>📄</span>
+                <span>Generate PDF Report</span>
+              </>
+            )}
+          </button>
         </div>
       )}
+
+      <style jsx>{`
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid #ffffff;
+          border-top: 2px solid transparent;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
