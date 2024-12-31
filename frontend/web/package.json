@@ -1,0 +1,25 @@
+{
+  "name": "frontend-web",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "clean": "rm -rf .next",
+    "dev:clean": "npm run clean && npm run dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.22.0",
+    "axios": "^1.7.9",
+    "next": "^13.5.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-simple-chatbot": "^0.6.1",
+    "styled-components": "^4.4.1"
+  }
+}

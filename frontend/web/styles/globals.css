@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --dark-bg: #1E1E1E;
+  --dark-secondary: #252526;
+  --dark-text: #FFFFFF;
+  --dark-text-secondary: #CCCCCC;
+  --light-bg: #FFFFFF;
+  --light-secondary: #F5F5F5;
+  --light-text: #1E1E1E;
+  --light-text-secondary: #4A5568;
+  --accent: #FF5F1F;
+  --border-dark: #333333;
+  --border-light: #E2E8F0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+body[data-theme='dark'] {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+body[data-theme='light'] {
+  background-color: var(--light-bg);
+  color: var(--light-text);
+}
+
+/* Container styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Button styles */
+button {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Card styles */
+[data-theme='dark'] .card {
+  background-color: var(--dark-secondary);
+  border: 1px solid var(--border-dark);
+}
+
+[data-theme='light'] .card {
+  background-color: var(--light-secondary);
+  border: 1px solid var(--border-light);
+}
+
+/* Link styles */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Input styles */
+input, textarea, select {
+  background-color: transparent;
+  border: 1px solid var(--border-dark);
+  padding: 0.5rem;
+  border-radius: 4px;
+  color: inherit;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] textarea,
+[data-theme='dark'] select {
+  border-color: var(--border-dark);
+}
+
+[data-theme='light'] input,
+[data-theme='light'] textarea,
+[data-theme='light'] select {
+  border-color: var(--border-light);
+}
+
+/* Animation keyframes */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Hero Section */
+.hero-container {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(to right, var(--dark-bg), var(--dark-secondary));
+}
+
+/* Stats Section */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 1rem;
+  border-radius: 8px;
+  animation: slideIn 0.3s ease;
+}
+
+/* Upload Progress */
+.upload-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--light-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* FAQ Section */
+.faq-container {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+}
+
+/* CTA Section */
+.cta-container {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--accent);
+  color: white;
+}
+
+/* FAQ Styles */
+.faq-item {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: var(--dark-secondary);
+  transition: all 0.3s ease;
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-question h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.faq-answer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-dark);
+  color: var(--dark-text-secondary);
+}
+
+[data-theme='light'] .faq-item {
+  background-color: var(--light-secondary);
+}
+
+[data-theme='light'] .faq-answer {
+  border-top-color: var(--border-light);
+  color: var(--light-text-secondary);
+} 
