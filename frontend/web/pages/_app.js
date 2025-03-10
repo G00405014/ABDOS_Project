@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Loading from '../components/Loading';
+import { SessionProvider } from 'next-auth/react';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -119,32 +120,34 @@ function MyApp({ Component, pageProps }) {
   }
   
   return (
-    <ThemeProvider>
-      <Head>
-        <title>ABDOS - AI-Powered Skin Cancer Detection</title>
-        <meta name="description" content="Early detection saves lives. Get instant AI-powered skin analysis with ABDOS." />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/favicon.ico" />
-        
-        {/* Open Graph / Social Media Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="ABDOS - AI-Powered Skin Cancer Detection" />
-        <meta property="og:description" content="Early detection saves lives. Get instant AI-powered skin analysis." />
-        <meta property="og:url" content="https://abdos.com" />
+    <SessionProvider session={pageProps.session}>
+      <ThemeProvider>
+        <Head>
+          <title>ABDOS - AI-Powered Skin Cancer Detection</title>
+          <meta name="description" content="Early detection saves lives. Get instant AI-powered skin analysis with ABDOS." />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <link rel="icon" href="/favicon.ico" />
+          
+          {/* Open Graph / Social Media Meta Tags */}
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content="ABDOS - AI-Powered Skin Cancer Detection" />
+          <meta property="og:description" content="Early detection saves lives. Get instant AI-powered skin analysis." />
+          <meta property="og:url" content="https://abdos.com" />
 
-        {/* Preload critical fonts */}
-        <link
-          rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-          as="style"
-        />
-      </Head>
-      {loading ? (
-        <Loading fullPage message="Loading page..." />
-      ) : (
-        mounted && <Component {...pageProps} />
-      )}
-    </ThemeProvider>
+          {/* Preload critical fonts */}
+          <link
+            rel="preload"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            as="style"
+          />
+        </Head>
+        {loading ? (
+          <Loading fullPage message="Loading page..." />
+        ) : (
+          mounted && <Component {...pageProps} />
+        )}
+      </ThemeProvider>
+    </SessionProvider>
   );
 }
 
