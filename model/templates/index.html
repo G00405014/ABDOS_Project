@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABDOS API Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0ea5e9;
+            border-bottom: 2px solid #0ea5e9;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #0369a1;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #0284c7;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .endpoint {
+            background-color: #f8fafc;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .get {
+            background-color: #22c55e;
+        }
+        .post {
+            background-color: #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f1f5f9;
+        }
+        .status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status.up {
+            background-color: #22c55e;
+        }
+        .status.down {
+            background-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>ABDOS API Documentation</h1>
+    
+    <div>
+        <p>
+            Welcome to the ABDOS (AI-Based Dermatological Observation System) API documentation. 
+            This API provides endpoints for skin cancer detection using deep learning.
+        </p>
+        
+        <div>
+            <h3>API Status</h3>
+            <p>
+                <span class="status {{ 'up' if model_loaded else 'down' }}"></span>
+                <strong>Model Status:</strong> {{ 'Loaded and Ready' if model_loaded else 'Not Loaded' }}
+            </p>
+        </div>
+    </div>
+
+    <h2>Endpoints</h2>
+
+    <div class="endpoint">
+        <h3><span class="method get">GET</span> /</h3>
+        <p>Health check endpoint to verify the API is running and the model is loaded.</p>
+        
+        <h4>Response</h4>
+        <pre><code>{
+  "status": "healthy",
+  "model_loaded": true
+}</code></pre>
+    </div>
+
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /predict</h3>
+        <p>Analyze an image to detect skin cancer.</p>
+        
+        <h4>Request</h4>
+        <p>The request should be a multipart/form-data with an image file.</p>
+        <pre><code>curl -X POST -F "image=@/path/to/image.jpg" http://localhost:5000/predict</code></pre>
+        
+        <h4>Response</h4>
+        <pre><code>{
+  "predicted_class": 1,
+  "confidence": 0.92,
+  "class_name": "Basal Cell Carcinoma",
+  "prediction_time": 0.45
+}</code></pre>
+
+        <h4>Error Response</h4>
+        <pre><code>{
+  "error": "No image provided"
+}</code></pre>
+    </div>
+
+    <h2>Class Labels</h2>
+    <table>
+        <tr>
+            <th>Class ID</th>
+            <th>Label</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>0</td>
+            <td>Actinic Keratoses</td>
+            <td>Rough, scaly patches caused by years of sun exposure. Precancerous and may develop into squamous cell carcinoma if untreated.</td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>Basal Cell Carcinoma</td>
+            <td>The most common type of skin cancer. Appears as a pearly or waxy bump, or a flat, flesh-colored or brown scar-like lesion.</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Benign Keratosis</td>
+            <td>A non-cancerous growth that develops from keratinocytes. Usually appears as a waxy, scaly, slightly raised growth.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Dermatofibroma</td>
+            <td>A common, benign skin growth that often appears as a small, firm bump. Usually pink to light brown in color.</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Melanoma</td>
+            <td>The most serious form of skin cancer. May appear as a new spot or an existing spot that changes in size, shape, or color.</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Melanocytic Nevi</td>
+            <td>Common, usually benign moles. Can be flat or raised, and range from pale to dark brown or black.</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Vascular Lesions</td>
+            <td>Benign growths made up of blood vessels. Includes cherry angiomas, hemangiomas, and other vascular anomalies.</td>
+        </tr>
+    </table>
+
+    <h2>Testing the API</h2>
+    <p>
+        You can test the API using the provided <code>test_api.py</code> script:
+    </p>
+    <pre><code>python test_api.py --image /path/to/image.jpg</code></pre>
+
+    <footer style="margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; text-align: center;">
+        <p>ABDOS - AI-Based Dermatological Observation System</p>
+        <p>API Version: 1.0.0</p>
+    </footer>
+</body>
+</html> 
