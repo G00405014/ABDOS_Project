@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "cd frontend/web && npm run dev",
-    "install-all": "npm install && cd frontend/web && npm install"
+    "install-all": "npm install && cd frontend/web && npm install",
+    "start": "powershell -ExecutionPolicy Bypass -File .\\start-servers.ps1",
+    "stop": "powershell -ExecutionPolicy Bypass -File .\\stop-servers.ps1"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
