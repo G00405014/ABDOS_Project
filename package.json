@@ -1,10 +1,28 @@
 {
   "name": "abdos-project",
   "version": "1.0.0",
+  "description": "AI-Based Dermatological Observation System",
+  "main": "index.js",
   "scripts": {
-    "dev": "cd frontend/web && npm run dev",
-    "install-all": "npm install && cd frontend/web && npm install"
+    "dev": "powershell -Command \"cd frontend/web; npm run dev\"",
+    "build": "powershell -Command \"cd frontend/web; npm run build\"",
+    "start": "powershell -Command \"cd frontend/web; npm run start\"",
+    "install:frontend": "powershell -Command \"cd frontend/web; npm install\"",
+    "install:backend": "powershell -Command \"pip install -r model/requirements.txt\"",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "start:all": "powershell -File ./start-servers.ps1",
+    "start:frontend": "powershell -File ./start-frontend.ps1",
+    "start:backend": "powershell -File ./start-backend.ps1",
+    "start:batch": "start-all.bat",
+    "stop": "stop-all.bat",
+    "stop:ps": "powershell -File ./stop-servers.ps1",
+    "clean": "powershell -File ./clean-nextjs.ps1",
+    "dev:clean": "npm run clean && npm run dev",
+    "setup:model": "powershell -File ./setup-real-model.ps1",
+    "setup:model:bat": "setup-real-model.bat"
   },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.7.1",
     "@react-pdf/renderer": "^3.1.14",
