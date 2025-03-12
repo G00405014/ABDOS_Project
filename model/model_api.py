@@ -33,6 +33,7 @@ CLASS_LABELS = {
 try:
     # Try different possible model paths
     possible_model_paths = [
+        r"C:\Users\User\Downloads\final_model_mobilenet.h5",  # New MobileNet model
         r"C:\Users\User\Downloads\model.h5",  # Original path
         os.path.join(os.path.dirname(__file__), "trained_model", "model.h5"),  # Relative to this file
         os.path.join("trained_model", "model.h5"),  # Relative to current directory

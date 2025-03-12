@@ -30,8 +30,8 @@ export default function Home() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h1 className="hero-title">
-              Advanced AI for
-              <span className="gradient-text"> Early Detection</span>
+              AI-Based Dermatological
+              <span className="gradient-text"> Observation System</span>
             </h1>
             <p className="hero-subtitle">
               Revolutionizing skin cancer detection with medical-grade artificial intelligence.
