@@ -22,8 +22,8 @@ ABDOS is an advanced web application that uses artificial intelligence to detect
 - Responsive design with CSS Grid and Flexbox
 
 ### Backend
-- Flask API for machine learning model serving
-- TensorFlow/EfficientNet for image classification
+- Express.js for API and business logic
+- TensorFlow Serving for ML model deployment
 - RESTful API architecture
 
 ## Project Structure
@@ -45,10 +45,14 @@ ABDOS_Project/
 │       ├── public/            # Static assets
 │       │   └── images/        # Image assets
 │       └── styles/            # Global styles
-├── model/
-│   ├── model_api.py           # Flask API for serving the ML model
-│   ├── requirements.txt       # Python dependencies
-│   └── trained_model/         # Saved model files
+├── backend/
+│   ├── server.js              # Express server
+│   ├── models/                # SavedModel for TensorFlow Serving
+│   │   └── skin_condition/    # Model version directory
+│   ├── start-tf-serving.ps1   # Script to start TensorFlow Serving
+│   ├── stop-tf-serving.ps1    # Script to stop TensorFlow Serving
+│   ├── convert_model.py       # Script to convert H5 to SavedModel
+│   └── routes/                # API routes
 ├── package.json               # Root package with scripts
 ├── start-servers.ps1          # PowerShell script to start all servers
 └── README.md                  # Project documentation
