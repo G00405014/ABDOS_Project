@@ -153,24 +153,23 @@ const ImageAnalysis = () => {
   const getConfidenceText = (confidence) => {
     if (confidence === null) return 'N/A';
     
-    // Convert confidence to percentage (0-100)
-    const confidencePercentage = Math.round(confidence * 100);
-    return `${confidencePercentage}%`;
+    // The confidence is already a percentage value from the backend
+    // Just format it with 1 decimal place
+    return `${confidence.toFixed(1)}%`;
   };
 
   const getConfidenceColor = (confidence, isDarkMode) => {
     if (confidence === null) return isDarkMode ? '#888888' : '#888888';
     
-    // Convert confidence to percentage (0-100)
-    const confidencePercentage = confidence * 100;
+    // The confidence is already a percentage value from the backend
+    const confidencePercentage = confidence;
     
     if (confidencePercentage >= 70) {
       return '#10b981'; // Green for high confidence (>=70%)
     } else if (confidencePercentage >= 40) {
       return '#f59e0b'; // Yellow for medium confidence (40-70%)
-    } else {
-      return '#ef4444'; // Red for low confidence (<40%)
     }
+    return '#ef4444'; // Red for low confidence (<40%)
   };
 
   const getRiskLevelColor = (riskLevel, isDarkMode) => {

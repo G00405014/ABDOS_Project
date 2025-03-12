@@ -40,134 +40,101 @@ export default async function handler(req, res) {
     const imageFile = files.image[0]; // Access the first file in the array
     console.log(`API route: Processing image: ${imageFile.originalFilename}, size: ${imageFile.size} bytes`);
     
-    // Create form data for the API request
+    // Create a form data object to send to the backend
     const formData = new FormData();
-    const fileStream = fs.createReadStream(imageFile.filepath);
-    formData.append('image', fileStream);
+    formData.append('image', fs.createReadStream(imageFile.filepath), {
+      filename: imageFile.originalFilename,
+      contentType: imageFile.mimetype,
+    });
 
-    console.log('API route: Sending request to backend API at http://localhost:5000/predict');
+    // Get backend URL from environment variable
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     
-    // Send the image to the Flask backend API
-    try {
-      const response = await axios.post('http://localhost:5000/predict', formData, {
-        headers: {
-          ...formData.getHeaders(),
-        },
-        // Increase timeout for large images
-        timeout: 30000,
+    console.log(`API route: Sending request to backend API at ${backendUrl}/api/analyze`);
+    
+    // Send the form data to the backend API
+    const response = await axios.post(`${backendUrl}/api/analyze`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+      timeout: 30000, // 30 seconds timeout for image processing
+    });
+
+    console.log('API route: Received response from backend API:', response.status);
+    console.log('API route: Response data:', JSON.stringify(response.data));
+    
+    // Check if the response contains an error
+    if (response.data.error) {
+      console.error('API route: Backend returned an error:', response.data.error);
+      return res.status(500).json({ 
+        error: response.data.error,
+        details: response.data.details || 'No additional details provided'
       });
-
-      console.log('API route: Received response from backend API:', response.status);
-      console.log('API route: Response data:', JSON.stringify(response.data));
-      
-      // Check if the response contains an error
-      if (response.data.error) {
-        console.error('API route: Backend returned an error:', response.data.error);
-        return res.status(500).json({ 
-          error: response.data.error,
-          details: response.data.details || 'No additional details provided'
-        });
-      }
-      
-      // Map the model's numeric class to human-readable labels and descriptions
-      const classLabels = {
-        0: 'Actinic Keratoses',
-        1: 'Basal Cell Carcinoma',
-        2: 'Benign Keratosis',
-        3: 'Dermatofibroma',
-        4: 'Melanoma',
-        5: 'Melanocytic Nevi',
-        6: 'Vascular Lesions'
-      };
-      
-      const classDescriptions = {
-        0: 'Rough, scaly patches caused by years of sun exposure. Precancerous and may develop into squamous cell carcinoma if untreated.',
-        1: 'The most common type of skin cancer. Appears as a pearly or waxy bump, or a flat, flesh-colored or brown scar-like lesion.',
-        2: 'A non-cancerous growth that develops from keratinocytes. Usually appears as a waxy, scaly, slightly raised growth.',
-        3: 'A common, benign skin growth that often appears as a small, firm bump. Usually pink to light brown in color.',
-        4: 'The most serious form of skin cancer. May appear as a new spot or an existing spot that changes in size, shape, or color.',
-        5: 'Common, usually benign moles. Can be flat or raised, and range from pale to dark brown or black.',
-        6: 'Benign growths made up of blood vessels. Includes cherry angiomas, hemangiomas, and other vascular anomalies.'
-      };
-      
-      const riskLevels = {
-        0: 'Moderate',
-        1: 'High',
-        2: 'Low',
-        3: 'Low',
-        4: 'Very High',
-        5: 'Low',
-        6: 'Low'
-      };
-      
-      const recommendedActions = {
-        0: 'Consult a dermatologist within 1-2 months for evaluation and possible treatment.',
-        1: 'Seek medical attention within 2-4 weeks. Early treatment has excellent outcomes.',
-        2: 'Regular monitoring recommended. Consult a dermatologist during your next regular check-up.',
-        3: 'No immediate action required. Monitor for changes in appearance.',
-        4: 'Urgent medical attention required. Schedule an appointment with a dermatologist within 1-2 weeks.',
-        5: 'Regular self-examination recommended. Consult a dermatologist if you notice changes.',
-        6: 'No immediate action required. Monitor for changes in size or color.'
-      };
-
-      // Get the predicted class and confidence from the model response
-      const { predicted_class, confidence } = response.data;
-      console.log(`API route: Prediction result - Class: ${predicted_class}, Confidence: ${confidence}`);
-      
-      // Prepare the enhanced response
-      const result = {
-        predicted_class: predicted_class,
-        confidence: confidence,
-        label: classLabels[predicted_class] || 'Unknown',
-        description: classDescriptions[predicted_class] || 'No description available',
-        riskLevel: riskLevels[predicted_class] || 'Unknown',
-        recommendedAction: recommendedActions[predicted_class] || 'Consult a healthcare professional',
-        timestamp: new Date().toISOString()
-      };
-
-      // Clean up the temporary file
-      fs.unlinkSync(imageFile.filepath);
-      console.log('API route: Temporary file cleaned up');
-
-      // Return the enhanced result
-      console.log('API route: Sending analysis result to client');
-      return res.status(200).json(result);
-    } catch (error) {
-      // Clean up the temporary file
-      if (imageFile && imageFile.filepath) {
-        try {
-          fs.unlinkSync(imageFile.filepath);
-          console.log('API route: Temporary file cleaned up after error');
-        } catch (cleanupError) {
-          console.error('API route: Error cleaning up temporary file:', cleanupError);
-        }
-      }
-      
-      // Handle different types of errors
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('API route: Backend API error:', error.response.status, error.response.data);
-        return res.status(error.response.status).json({ 
-          error: error.response.data.error || 'Backend API error',
-          details: error.response.data.details || JSON.stringify(error.response.data)
-        });
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('API route: Backend service unavailable - no response received');
-        return res.status(503).json({ 
-          error: 'Backend service unavailable', 
-          details: 'Could not connect to the analysis service. Please make sure the backend server is running.' 
-        });
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('API route: Internal server error:', error.message);
-        return res.status(500).json({ 
-          error: 'Internal server error', 
-          details: error.message 
-        });
-      }
     }
+    
+    // Map the model's numeric class to human-readable labels and descriptions
+    const classLabels = {
+      0: 'Actinic Keratoses',
+      1: 'Basal Cell Carcinoma',
+      2: 'Benign Keratosis',
+      3: 'Dermatofibroma',
+      4: 'Melanoma',
+      5: 'Melanocytic Nevi',
+      6: 'Vascular Lesions'
+    };
+    
+    const classDescriptions = {
+      0: 'Rough, scaly patches caused by years of sun exposure. Precancerous and may develop into squamous cell carcinoma if untreated.',
+      1: 'The most common type of skin cancer. Appears as a pearly or waxy bump, or a flat, flesh-colored or brown scar-like lesion.',
+      2: 'A non-cancerous growth that develops from keratinocytes. Usually appears as a waxy, scaly, slightly raised growth.',
+      3: 'A common, benign skin growth that often appears as a small, firm bump. Usually pink to light brown in color.',
+      4: 'The most serious form of skin cancer. May appear as a new spot or an existing spot that changes in size, shape, or color.',
+      5: 'Common, usually benign moles. Can be flat or raised, and range from pale to dark brown or black.',
+      6: 'Benign growths made up of blood vessels. Includes cherry angiomas, hemangiomas, and other vascular anomalies.'
+    };
+    
+    const riskLevels = {
+      0: 'Moderate',
+      1: 'High',
+      2: 'Low',
+      3: 'Low',
+      4: 'Very High',
+      5: 'Low',
+      6: 'Low'
+    };
+    
+    const recommendedActions = {
+      0: 'Consult a dermatologist within 1-2 months for evaluation and possible treatment.',
+      1: 'Seek medical attention within 2-4 weeks. Early treatment has excellent outcomes.',
+      2: 'Regular monitoring recommended. Consult a dermatologist during your next regular check-up.',
+      3: 'No immediate action required. Monitor for changes in appearance.',
+      4: 'Urgent medical attention required. Schedule an appointment with a dermatologist within 1-2 weeks.',
+      5: 'Regular self-examination recommended. Consult a dermatologist if you notice changes.',
+      6: 'No immediate action required. Monitor for changes in size or color.'
+    };
+
+    // Get the predicted class and confidence from the model response
+    const { predicted_class, confidence } = response.data;
+    console.log(`API route: Prediction result - Class: ${predicted_class}, Confidence: ${confidence}`);
+    
+    // Prepare the enhanced response
+    const result = {
+      predicted_class: predicted_class,
+      confidence: confidence,
+      label: classLabels[predicted_class] || 'Unknown',
+      description: classDescriptions[predicted_class] || 'No description available',
+      riskLevel: riskLevels[predicted_class] || 'Unknown',
+      recommendedAction: recommendedActions[predicted_class] || 'Consult a healthcare professional',
+      timestamp: new Date().toISOString()
+    };
+
+    // Clean up the temporary file
+    fs.unlinkSync(imageFile.filepath);
+    console.log('API route: Temporary file cleaned up');
+
+    // Return the enhanced result
+    console.log('API route: Sending analysis result to client');
+    return res.status(200).json(result);
   } catch (error) {
     console.error('API route: Error processing image:', error);
     return res.status(500).json({ 

@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     console.log('Test API route: Testing connection to backend API');
     
     // Test the health endpoint of the backend API
-    const response = await axios.get('http://localhost:5000/health', {
+    const response = await axios.get(`${backendUrl}/api/health`, {
       timeout: 5000,
     });
     
