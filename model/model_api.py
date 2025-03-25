@@ -15,6 +15,47 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Define custom preprocessing layer (needed for model loading)
+class Preprocessing(tf.keras.layers.Layer):
+    def __init__(self, divisor=127.5, offset=1.0, **kwargs):
+        super(Preprocessing, self).__init__(**kwargs)
+        self.divisor = divisor
+        self.offset = offset
+
+    def call(self, inputs):
+        # Convert inputs to float32
+        x = tf.cast(inputs, tf.float32)
+        # Normalize to [-1, 1] range
+        x = tf.divide(x, self.divisor)
+        x = x - self.offset
+        return x
+
+    def get_config(self):
+        config = super(Preprocessing, self).get_config()
+        config.update({
+            'divisor': self.divisor,
+            'offset': self.offset
+        })
+        return config
+
+# Define TrueDivide layer
+class TrueDivide(tf.keras.layers.Layer):
+    def __init__(self, divisor=127.5, offset=1.0, **kwargs):
+        super(TrueDivide, self).__init__(**kwargs)
+        self.divisor = divisor
+        self.offset = offset
+    
+    def call(self, inputs):
+        return tf.divide(inputs, self.divisor) - self.offset
+    
+    def get_config(self):
+        config = super(TrueDivide, self).get_config()
+        config.update({
+            'divisor': self.divisor,
+            'offset': self.offset
+        })
+        return config
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS if frontend and backend are on different origins
 
@@ -31,6 +72,12 @@ CLASS_LABELS = {
 
 # Load model on startup
 try:
+    # Define custom objects for model loading
+    custom_objects = {
+        'Preprocessing': Preprocessing,
+        'TrueDivide': TrueDivide
+    }
+
     # Try different possible model paths
     possible_model_paths = [
         r"C:\Users\User\Downloads\final_model_mobilenet.h5",  # New MobileNet model
@@ -53,7 +100,7 @@ try:
     if model_path:
         logger.info(f"Loading model from: {model_path}")
         start_time = time.time()
-        model = load_model(model_path)
+        model = load_model(model_path, custom_objects=custom_objects)
         logger.info(f"Model loaded successfully in {time.time() - start_time:.2f} seconds")
     else:
         logger.warning("No model file found in any of the expected locations")
@@ -189,7 +236,7 @@ if __name__ == "__main__":
             
             logger.info(f"Dummy model created at: {dummy_model_path}")
             logger.info("Loading dummy model")
-            model = load_model(dummy_model_path)
+            model = load_model(dummy_model_path, custom_objects=custom_objects)
             logger.info("Dummy model loaded successfully")
             
             # Test the model with a random input to ensure it works

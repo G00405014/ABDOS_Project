@@ -86,63 +86,43 @@ ABDOS_Project/
 
 ### Running the Application
 
-#### Option 1: Start both servers with one command (Windows PowerShell)
-```
-npm run start:all
-```
-This will open two PowerShell windows, one for the frontend and one for the backend.
+#### Option 1: Using Flask API (Recommended)
 
-#### Option 2: Start both servers with batch file (Windows Command Prompt)
 ```
-npm run start:batch
+./start-servers-flask.ps1
 ```
-or directly:
-```
-start-all.bat
-```
-This will open two command windows, one for the frontend and one for the backend.
 
-#### Option 3: Start servers separately
+This will start:
+- The Flask API on port 5000
+- The Express backend on port 3001
+- The Next.js frontend on port 3000
 
-1. Start the frontend development server:
-   ```
-   cd frontend/web
-   npm run dev
-   ```
-   The frontend will be available at http://localhost:3000
+#### Option 2: Using TensorFlow Serving (Legacy)
 
-2. Start the model API server:
-   ```
-   cd model
-   python model_api.py
-   ```
-   The API will be available at http://localhost:5000
+```
+./start-servers.ps1
+```
+
+This will start:
+- TensorFlow Serving on port 8501
+- The Express backend on port 3001
+- The Next.js frontend on port 3000
 
 ### Stopping the Application
 
-#### Option 1: Using stop scripts
+#### Option 1: Using Flask API (Recommended)
 
-Stop both servers with one command (Windows Command Prompt):
 ```
-npm run stop
-```
-or directly:
-```
-stop-all.bat
+./stop-servers-flask.ps1
 ```
 
-Stop both servers with PowerShell:
+#### Option 2: Using TensorFlow Serving (Legacy)
+
 ```
-npm run stop:ps
+./stop-servers.ps1
 ```
 
-#### Option 2: Manually stopping servers
-
-1. Press Ctrl+C in each server window
-2. Confirm with Y when prompted
-3. Or simply close the server windows
-
-For more detailed instructions and troubleshooting, see [FIXED_INSTRUCTIONS.md](./FIXED_INSTRUCTIONS.md).
+For more detailed instructions and troubleshooting, see FIXED_INSTRUCTIONS.md.
 
 ## Usage
 
