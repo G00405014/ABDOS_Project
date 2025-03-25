@@ -77,8 +77,8 @@ export default function About() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="team-section">
+      {/* Developer Credit Section */}
+      <section className="developer-section">
         <div className="container">
           <motion.div 
             className="section-header"
@@ -87,33 +87,30 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <span className="overline">Our Team</span>
-            <h2>Meet the Experts Behind ABDOS</h2>
+            <span className="overline">Developer</span>
+            <h2>About the Developer</h2>
             <p className="section-subtitle">
-              A multidisciplinary team of AI specialists, dermatologists, and healthcare professionals 
-              committed to improving skin cancer detection through technology.
+              ABDOS was developed by Emeka Adimora, a 4th year Software and Electronic Engineering student.
             </p>
           </motion.div>
 
-          <div className="team-grid">
-            {teamMembers.map((member, index) => (
-              <motion.div
-                key={member.name}
-                className="team-member"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="member-photo" style={{ backgroundImage: `url(${member.photo})` }}>
-                  <div className="photo-overlay"></div>
-                </div>
-                <h3>{member.name}</h3>
-                <p className="member-title">{member.title}</p>
-                <p className="member-bio">{member.bio}</p>
-              </motion.div>
-            ))}
-          </div>
+          <motion.div
+            className="developer-info"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="developer-content">
+              <h3>Emeka Adimora</h3>
+              <p className="developer-title">4th Year Software and Electronic Engineering Student</p>
+              <p className="developer-bio">
+                This project represents my commitment to leveraging technology for healthcare innovation. 
+                ABDOS combines my passion for software development with the goal of making healthcare 
+                more accessible through AI-powered solutions.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -277,82 +274,36 @@ export default function About() {
           background: linear-gradient(to top, rgba(0,0,0,0.3), transparent);
         }
 
-        /* Team Section */
-        .team-section {
-          background: ${isDarkMode ? 'var(--dark-bg)' : 'var(--light-bg)'};
+        /* Developer Section */
+        .developer-section {
+          background: ${isDarkMode ? 'var(--dark-bg-secondary)' : 'var(--light-bg-secondary)'};
         }
 
-        .section-header {
-          text-align: center;
+        .developer-info {
           max-width: 800px;
-          margin: 0 auto 60px;
+          margin: 0 auto;
+          text-align: center;
+          padding: 40px;
+          background: ${isDarkMode ? 'var(--dark-card)' : 'var(--light-card)'};
+          border-radius: 16px;
+          border: 1px solid ${isDarkMode ? 'var(--dark-border)' : 'var(--light-border)'};
         }
 
-        .section-header h2 {
-          font-size: 2.5rem;
+        .developer-content h3 {
+          font-size: 2rem;
           font-weight: 700;
           margin-bottom: 16px;
           color: ${isDarkMode ? 'var(--dark-text)' : 'var(--light-text)'};
         }
 
-        .section-subtitle {
-          font-size: 1.125rem;
-          line-height: 1.6;
-          color: ${isDarkMode ? 'var(--dark-text-secondary)' : 'var(--light-text-secondary)'};
-        }
-
-        .team-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 32px;
-        }
-
-        .team-member {
-          text-align: center;
-          padding: 32px;
-          background: ${isDarkMode ? 'var(--dark-card)' : 'var(--light-card)'};
-          border-radius: 24px;
-          border: 1px solid ${isDarkMode ? 'var(--dark-border)' : 'var(--light-border)'};
-          transition: transform 0.3s ease;
-        }
-
-        .team-member:hover {
-          transform: translateY(-8px);
-        }
-
-        .member-photo {
-          width: 160px;
-          height: 160px;
-          border-radius: 50%;
-          margin: 0 auto 24px;
-          background-size: cover;
-          background-position: center;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .photo-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.3));
-        }
-
-        .team-member h3 {
+        .developer-title {
           font-size: 1.25rem;
-          font-weight: 600;
-          margin-bottom: 8px;
-          color: ${isDarkMode ? 'var(--dark-text)' : 'var(--light-text)'};
-        }
-
-        .member-title {
-          font-size: 0.875rem;
           color: var(--primary);
-          margin-bottom: 16px;
-          font-weight: 500;
+          margin-bottom: 24px;
         }
 
-        .member-bio {
-          font-size: 0.875rem;
+        .developer-bio {
+          font-size: 1.125rem;
           line-height: 1.6;
           color: ${isDarkMode ? 'var(--dark-text-secondary)' : 'var(--light-text-secondary)'};
         }
@@ -421,10 +372,6 @@ export default function About() {
             grid-template-columns: 1fr;
             gap: 40px;
           }
-
-          .team-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
         }
 
         @media (max-width: 768px) {
@@ -435,37 +382,8 @@ export default function About() {
           .hero-title {
             font-size: 2.5rem;
           }
-
-          .team-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .mission-stats {
-            grid-template-columns: 1fr;
-          }
         }
       `}</style>
     </Layout>
   );
-}
-
-const teamMembers = [
-  {
-    name: "Dr. Sarah Johnson",
-    title: "Lead AI Researcher",
-    bio: "Specializes in machine learning applications in healthcare with 10+ years of experience.",
-    photo: "/images/team/developer.jpg"
-  },
-  {
-    name: "Dr. Michael Chen",
-    title: "Consulting Dermatologist",
-    bio: "Board-certified dermatologist with specialty training in skin cancer detection and treatment.",
-    photo: "/images/team/dermatologist.jpg"
-  },
-  {
-    name: "Emma Rodriguez",
-    title: "Health Technology Director",
-    bio: "Expert in bringing medical technology to market with a focus on accessibility and user experience.",
-    photo: "/images/team/healthtech.jpg"
-  }
-]; 
+} 
