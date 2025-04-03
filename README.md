@@ -1,8 +1,106 @@
 # ABDOS - AI-Based Dermatological Observation System
 
-ABDOS is an advanced web application that uses artificial intelligence to detect and analyze skin cancer from uploaded images. The system provides users with risk assessments and recommendations for further medical consultation.
+ABDOS is a web application that uses artificial intelligence to analyze skin lesions and detect potential skin cancer.
 
-> **Note**: If you're experiencing issues running the application on Windows, please see [FIXED_INSTRUCTIONS.md](./FIXED_INSTRUCTIONS.md) for updated instructions.
+## Project Structure
+
+- **frontend/web**: Next.js web application
+- **backend**: Python Flask API and Node.js server
+
+## Installation and Setup
+
+### Prerequisites
+
+- Node.js v18+ (LTS recommended)
+- npm v9+
+- Python 3.10+
+- Git
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Create a Python virtual environment:
+   ```bash
+   python -m venv venv
+   ```
+
+3. Activate the virtual environment:
+   ```bash
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+4. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. Start the Flask API server:
+   ```bash
+   python model_api.py
+   ```
+
+6. In a separate terminal, install Node.js dependencies and start the server:
+   ```bash
+   npm install
+   node server.js
+   ```
+
+### Frontend Setup
+
+1. Navigate to the frontend web directory:
+   ```bash
+   cd frontend/web
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Build for production:
+   ```bash
+   npm run build
+   npm start
+   ```
+
+## Technologies Used
+
+### Frontend
+- Next.js
+- React
+- Tailwind CSS
+- Axios
+- Chart.js
+- Framer Motion
+
+### Backend
+- Flask
+- TensorFlow
+- Node.js
+- Express
+
+## Skin Lesion Classification
+
+The system uses deep learning to classify skin lesions into the following categories:
+- Actinic Keratoses
+- Basal Cell Carcinoma
+- Benign Keratosis
+- Dermatofibroma
+- Melanoma
+- Melanocytic Nevi
+- Vascular Lesions
 
 ## Features
 
@@ -25,34 +123,6 @@ ABDOS is an advanced web application that uses artificial intelligence to detect
 - Flask API for machine learning model serving
 - TensorFlow/EfficientNet for image classification
 - RESTful API architecture
-
-## Project Structure
-
-```
-ABDOS_Project/
-├── frontend/
-│   └── web/
-│       ├── components/        # Reusable UI components
-│       ├── context/           # React context providers
-│       ├── pages/             # Next.js pages
-│       │   ├── api/           # API routes
-│       │   ├── _app.js        # App wrapper
-│       │   ├── index.js       # Home page
-│       │   ├── about.js       # About page
-│       │   ├── resources.js   # Resources page
-│       │   ├── contact.js     # Contact page
-│       │   └── analysis.js    # Analysis page
-│       ├── public/            # Static assets
-│       │   └── images/        # Image assets
-│       └── styles/            # Global styles
-├── model/
-│   ├── model_api.py           # Flask API for serving the ML model
-│   ├── requirements.txt       # Python dependencies
-│   └── trained_model/         # Saved model files
-├── package.json               # Root package with scripts
-├── start-servers.ps1          # PowerShell script to start all servers
-└── README.md                  # Project documentation
-```
 
 ## Getting Started
 
