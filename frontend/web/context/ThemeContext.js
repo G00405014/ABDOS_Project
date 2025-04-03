@@ -8,24 +8,27 @@ export function ThemeProvider({ children }) {
 
   // Initialize theme based on system preference or saved preference
   useEffect(() => {
-    // Check if there's a saved theme preference in localStorage
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme) {
-      // Use the saved theme preference
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      // Check if user's system prefers dark mode
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
+    // Only run on client-side
+    if (typeof window !== 'undefined') {
+      // Check if there's a saved theme preference in localStorage
+      const savedTheme = localStorage.getItem('theme');
+      
+      if (savedTheme) {
+        // Use the saved theme preference
+        setIsDarkMode(savedTheme === 'dark');
+      } else {
+        // Check if user's system prefers dark mode
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setIsDarkMode(prefersDark);
+      }
+      
+      setMounted(true);
     }
-    
-    setMounted(true);
   }, []);
 
   // Update the document attributes and localStorage when theme changes
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || typeof window === 'undefined') return;
     
     // Save theme preference to localStorage
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
@@ -59,7 +62,7 @@ export function ThemeProvider({ children }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;

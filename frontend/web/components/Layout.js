@@ -1,7 +1,6 @@
 import Head from 'next/head';
 import Header from './Header';
 import Footer from './Footer';
-import ChatBot from './ChatBot';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Layout({ children, title = 'Skin Cancer Detection | ABDOS' }) {
@@ -24,8 +23,6 @@ export default function Layout({ children, title = 'Skin Cancer Detection | ABDO
       </main>
       
       <Footer />
-      
-      <ChatBot />
 
       <style jsx>{`
         .app-layout {

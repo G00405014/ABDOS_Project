@@ -1,5 +1,4 @@
 import { useTheme } from '../context/ThemeContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
@@ -8,27 +7,90 @@ export default function Home() {
   const { isDarkMode } = useTheme();
   const [activeSection, setActiveSection] = useState('hero');
   const [scrollY, setScrollY] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Define features and steps here to ensure they're available
+  const features = [
+    {
+      title: "Advanced AI Detection",
+      description: "Our AI algorithms can detect potential skin cancer with high accuracy rates that match dermatologist diagnoses.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+    },
+    {
+      title: "Privacy First",
+      description: "Your data and images are encrypted and handled according to strict medical privacy guidelines.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+    },
+    {
+      title: "Real-time Analysis",
+      description: "Get results in seconds rather than waiting days for traditional methods of skin analysis.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      title: "Multiple Skin Conditions",
+      description: "We can detect multiple types of skin conditions beyond just melanoma, including basal cell carcinoma and more.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+    },
+    {
+      title: "Continuous Learning",
+      description: "Our AI model improves with each scan, constantly learning and enhancing its diagnostic capabilities.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+    },
+    {
+      title: "Expert Consultation",
+      description: "Connect with certified dermatologists for follow-up consultations based on your analysis results.",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+    }
+  ];
+
+  const steps = [
+    {
+      title: "Upload Your Image",
+      description: "Take a clear photo of the skin area you're concerned about and upload it to our secure platform."
+    },
+    {
+      title: "AI Analysis",
+      description: "Our advanced AI algorithms analyze the image, looking for patterns, colors, and shapes that could indicate potential skin issues."
+    },
+    {
+      title: "Get Results",
+      description: "Within seconds, receive a detailed analysis with risk assessment and next steps for your skin health."
+    },
+    {
+      title: "Follow-up Options",
+      description: "If needed, book a virtual consultation with a certified dermatologist to discuss your results."
+    }
+  ];
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
+    setIsMounted(true);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Only add scroll event listener on the client
+    if (typeof window !== 'undefined') {
+      const handleScroll = () => {
+        setScrollY(window.scrollY);
+      };
+
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
+  // Return a simple loading state during server-side rendering
+  if (!isMounted) {
+    return (
+      <div className="loading-home">
+        <div className="loading-text">Loading...</div>
+      </div>
+    );
+  }
+  
   return (
     <Layout>
       {/* Hero Section */}
       <section className="hero-section" id="hero">
         <div className="hero-content">
-          <motion.div 
-            className="hero-text"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
+          <div className="hero-text">
             <h1 className="hero-title">
               AI-Based Dermatological
               <span className="gradient-text"> Observation System</span>
@@ -47,14 +109,9 @@ export default function Home() {
                 Learn More
               </Link>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div 
-            className="hero-visual"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-          >
+          <div className="hero-visual">
             <div className="visual-container">
               <div className="floating-elements">
                 <div className="stat-card accuracy">
@@ -70,61 +127,39 @@ export default function Home() {
                   <span className="stat-label">Cancer Types</span>
                 </div>
               </div>
-              <div className="main-image">
-                <img src="/images/hero-device.png" alt="AI Analysis Interface" />
-              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         <div className="scroll-indicator">
-          <motion.div
-            animate={{
-              y: [0, 10, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          >
+          <div>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="features-section" id="features">
         <div className="section-content">
-          <motion.div 
-            className="section-header"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="section-header">
             <span className="overline">Revolutionary Technology</span>
             <h2 className="section-title">
               Precision in Every <span className="gradient-text">Analysis</span>
             </h2>
-          </motion.div>
+          </div>
 
           <div className="features-grid">
             {features.map((feature, index) => (
-              <motion.div
+              <div
                 key={feature.title}
                 className="feature-card"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <div className="feature-icon">{feature.icon}</div>
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -133,35 +168,25 @@ export default function Home() {
       {/* Process Section */}
       <section className="process-section" id="process">
         <div className="section-content">
-          <motion.div 
-            className="section-header"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="section-header">
             <span className="overline">How It Works</span>
             <h2 className="section-title">
               Simple. <span className="gradient-text">Powerful.</span> Accurate.
             </h2>
-          </motion.div>
+          </div>
 
           <div className="process-steps">
             {steps.map((step, index) => (
-              <motion.div
+              <div
                 key={step.title}
                 className="process-step"
-                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
               >
                 <div className="step-number">{index + 1}</div>
                 <div className="step-content">
                   <h3>{step.title}</h3>
                   <p>{step.description}</p>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -169,13 +194,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="cta-section" id="cta">
-        <motion.div 
-          className="cta-content"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
+        <div className="cta-content">
           <h2>Ready to Experience the Future of Skin Health?</h2>
           <p>Join thousands of users who trust our AI-powered analysis for early detection.</p>
           <Link href="/analysis" className="primary-button">
@@ -184,7 +203,7 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </Link>
-        </motion.div>
+        </div>
       </section>
 
       <style jsx>{`
@@ -588,48 +607,3 @@ export default function Home() {
     </Layout>
   );
 }
-
-const features = [
-  {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: "90%+ Accuracy",
-    description: "Industry-leading detection rates powered by advanced deep learning algorithms."
-  },
-  {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-    title: "Instant Results",
-    description: "Get comprehensive analysis results in under 10 seconds."
-  },
-  {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-    title: "HIPAA Compliant",
-    description: "Your data is protected with medical-grade security protocols."
-  }
-];
-
-const steps = [
-  {
-    title: "Upload Your Image",
-    description: "Take a photo or upload an existing image of the skin lesion you want to analyze."
-  },
-  {
-    title: "AI Analysis",
-    description: "Our advanced AI model processes the image using deep learning technology trained on over 100,000 clinical cases."
-  },
-  {
-    title: "Get Your Results",
-    description: "Receive a detailed report with risk assessment and recommended next steps in seconds."
-  }
-];

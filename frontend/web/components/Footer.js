@@ -1,9 +1,31 @@
 import Link from 'next/link';
 import { useTheme } from '../context/ThemeContext';
+import { useState, useEffect } from 'react';
 
 const Footer = () => {
   const { isDarkMode } = useTheme();
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(2023);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setYear(new Date().getFullYear());
+  }, []);
+
+  // Return a simplified footer during server-side rendering
+  if (!isMounted) {
+    return (
+      <footer className="site-footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <span className="footer-logo">ABDOS</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="site-footer">
@@ -35,7 +57,6 @@ const Footer = () => {
                 <li><Link href="/faq" className="footer-link">FAQ</Link></li>
                 <li><Link href="/privacy" className="footer-link">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="footer-link">Terms of Service</Link></li>
-                <li><Link href="/contact" className="footer-link">Contact Us</Link></li>
               </ul>
             </div>
           </div>
@@ -43,7 +64,7 @@ const Footer = () => {
         
         <div className="footer-bottom">
           <p className="copyright">
-            &copy; {currentYear} ABDOS. All rights reserved.
+            &copy; {year} ABDOS. All rights reserved.
           </p>
           <div className="social-links">
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Twitter">
