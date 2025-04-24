@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from flask_cors import CORS
 import io
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -27,7 +28,7 @@ class Preprocessing(tf.keras.layers.Layer):
         return base_config
 
 # Load the model with custom preprocessing layer
-model_path = r"C:\Users\User\Downloads\final_model_mobilenet.h5"
+model_path = r"C:\Users\G00405014@atu.ie\Downloads\Model.h5"
 custom_objects = {'Preprocessing': Preprocessing}
 
 try:
@@ -39,11 +40,65 @@ except:
     pass
 
 try:
-    model = load_model(model_path, custom_objects=custom_objects)
-    print("Model loaded successfully!")
+    print(f"Attempting to load model from: {model_path}")
+    # Try loading as a SavedModel first
+    try:
+        model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
+        print("Model loaded successfully using tf.keras.models.load_model!")
+    except Exception as e1:
+        print(f"Failed to load as SavedModel: {str(e1)}")
+        print("Trying to load as weights...")
+        
+        # Create base model architecture
+        base_model = tf.keras.applications.MobileNetV2(
+            input_shape=(224, 224, 3),
+            include_top=False,
+            weights=None
+        )
+        
+        # Add custom layers
+        x = base_model.output
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(128, activation='relu')(x)
+        predictions = tf.keras.layers.Dense(7, activation='softmax')(x)
+        
+        # Create the model
+        model = tf.keras.Model(inputs=base_model.input, outputs=predictions)
+        
+        try:
+            # Try loading weights
+            model.load_weights(model_path)
+            print("Model weights loaded successfully!")
+        except Exception as e2:
+            print(f"Failed to load weights: {str(e2)}")
+            # Try loading as a complete model without custom objects
+            try:
+                model = tf.keras.models.load_model(model_path)
+                print("Model loaded successfully without custom objects!")
+            except Exception as e3:
+                print(f"Failed to load model without custom objects: {str(e3)}")
+                raise Exception("All model loading attempts failed")
+    
 except Exception as e:
-    print(f"Error loading model: {e}")
+    print(f"Error loading model: {str(e)}")
+    print(f"Model path: {model_path}")
+    print(f"Current working directory: {os.getcwd()}")
+    import traceback
+    traceback.print_exc()
     model = None
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    if model is None:
+        return jsonify({
+            'status': 'error',
+            'message': 'Model not loaded',
+            'model_path': model_path
+        }), 503
+    return jsonify({
+        'status': 'healthy',
+        'message': 'Backend API is running'
+    })
 
 @app.route('/predict', methods=['POST'])
 def predict():

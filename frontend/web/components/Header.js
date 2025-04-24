@@ -6,19 +6,39 @@ const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    setIsMounted(true);
+    
+    if (typeof window !== 'undefined') {
+      const handleScroll = () => {
+        setIsScrolled(window.scrollY > 10);
+      };
+  
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // On server-side rendering, return a simplified header
+  if (!isMounted) {
+    return (
+      <header className="site-header">
+        <div className="container">
+          <div className="header-content">
+            <div className="logo-container">
+              <span className="logo">ABDOS</span>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
@@ -50,11 +70,6 @@ const Header = () => {
               <li>
                 <Link href="/resources" className="nav-link">
                   Resources
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="nav-link">
-                  Contact
                 </Link>
               </li>
             </ul>
