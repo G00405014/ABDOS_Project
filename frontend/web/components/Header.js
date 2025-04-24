@@ -1,9 +1,13 @@
 import { useTheme } from '../context/ThemeContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'next/router';
 
 const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -25,7 +29,12 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // On server-side rendering, return a simplified header
+  const handleLogout = async () => {
+    await logout();
+    setIsMobileMenuOpen(false);
+    router.push('/');
+  };
+
   if (!isMounted) {
     return (
       <header className="site-header">
@@ -53,24 +62,42 @@ const Header = () => {
           <nav className={`main-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <ul className="nav-links">
               <li>
-                <Link href="/" className="nav-link">
+                <Link href="/" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/analysis" className="nav-link">
+                <Link href="/analysis" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                   Analysis
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="nav-link">
+                <Link href="/about" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/resources" className="nav-link">
+                <Link href="/resources" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                   Resources
                 </Link>
+              </li>
+              {user && (
+                <li>
+                  <Link href="/dashboard" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                    My Profile
+                  </Link>
+                </li>
+              )}
+              <li className="auth-link-mobile">
+                {user ? (
+                  <button onClick={handleLogout} className="nav-link logout-button">
+                    Logout
+                  </button>
+                ) : (
+                  <Link href="/auth" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                    Login / Sign Up
+                  </Link>
+                )}
               </li>
             </ul>
           </nav>
@@ -91,6 +118,18 @@ const Header = () => {
                 </svg>
               )}
             </button>
+
+            <div className="auth-link-desktop">
+              {user ? (
+                <button onClick={handleLogout} className="nav-link logout-button">
+                  Logout
+                </button>
+              ) : (
+                <Link href="/auth" className="nav-link">
+                  Login / Sign Up
+                </Link>
+              )}
+            </div>
 
             <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle Menu">
               <div className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
@@ -148,10 +187,15 @@ const Header = () => {
 
         .nav-links {
           display: flex;
+          align-items: center;
           gap: 2rem;
           list-style: none;
           padding: 0;
           margin: 0;
+        }
+
+        .nav-links li {
+          flex-shrink: 0;
         }
 
         .nav-link {
@@ -240,33 +284,73 @@ const Header = () => {
           transform: translateY(-8px) rotate(-45deg);
         }
 
+        .logout-button {
+          background: none;
+          border: none;
+          padding: 0;
+          font: inherit;
+          cursor: pointer;
+          color: ${isDarkMode ? 'var(--dark-text-secondary)' : 'var(--light-text-secondary)'};
+          font-weight: 500;
+          transition: color 0.2s ease;
+        }
+
+        .logout-button:hover {
+          color: ${isDarkMode ? 'var(--dark-text)' : 'var(--light-text)'};
+        }
+
+        .auth-link-mobile {
+          display: none;
+        }
+        .auth-link-desktop {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        @media (max-width: 992px) {
+          .nav-links {
+            gap: 1.5rem;
+          }
+        }
+
         @media (max-width: 768px) {
           .main-nav {
             position: fixed;
-            top: 80px;
+            top: ${isScrolled ? '64px' : '80px'};
             left: 0;
             right: 0;
             background-color: ${isDarkMode ? 'var(--dark-bg)' : 'var(--light-bg)'};
             padding: 1rem;
-            transform: translateY(-100%);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: ${isMobileMenuOpen ? 'translateY(0)' : 'translateY(-110%)'};
+            transition: transform 0.3s ease-in-out;
+            z-index: 999;
           }
-
           .main-nav.mobile-open {
             transform: translateY(0);
-            opacity: 1;
-            visibility: visible;
           }
-
           .nav-links {
             flex-direction: column;
+            align-items: flex-start;
             gap: 1rem;
           }
-
           .mobile-menu-toggle {
             display: block;
+          }
+          .auth-link-mobile {
+            display: block;
+            width: 100%;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid ${isDarkMode ? 'var(--dark-border)' : 'var(--light-border)'};
+          }
+          .auth-link-desktop {
+            display: none;
+          }
+          .logout-button {
+            text-align: left;
+            width: 100%;
           }
         }
       `}</style>

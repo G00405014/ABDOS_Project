@@ -6,19 +6,16 @@ import numpy as np
 def create_dummy_model():
     # Create a simple CNN model
     model = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=(224, 224, 3), name="input_image"),
+        tf.keras.layers.Input(shape=(224, 224, 3)),
         tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
         tf.keras.layers.MaxPooling2D((2, 2)),
-        tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
-        tf.keras.layers.MaxPooling2D((2, 2)),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(7, activation='softmax')  # 7 skin conditions
+        tf.keras.layers.Dense(7, activation='softmax')
     ])
     
     # Compile the model
     model.compile(optimizer='adam',
-                  loss='sparse_categorical_crossentropy',
+                  loss='categorical_crossentropy',
                   metrics=['accuracy'])
     
     return model
@@ -76,4 +73,17 @@ try:
 except Exception as e:
     print(f"Error creating and saving dummy model: {e}")
     import traceback
-    traceback.print_exc() 
+    traceback.print_exc()
+
+if __name__ == "__main__":
+    # Create model
+    model = create_dummy_model()
+    
+    # Create directory if it doesn't exist
+    model_dir = os.path.join(os.getcwd(), "models", "skin_condition", "1")
+    os.makedirs(model_dir, exist_ok=True)
+    
+    # Save model in .keras format
+    model_path = os.path.join(model_dir, "model.keras")
+    model.save(model_path)
+    print(f"Dummy model saved to {model_path}") 

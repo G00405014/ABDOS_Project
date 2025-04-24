@@ -282,7 +282,7 @@ export default function Analysis() {
       <section className="upload-section">
         <div className="container">
           <div className="upload-grid">
-            {/* Upload Area */}
+            {/* Upload Area */} 
             <motion.div 
               className="upload-area"
               initial={{ opacity: 0, x: -30 }}
@@ -352,7 +352,7 @@ export default function Analysis() {
               </div>
             </motion.div>
 
-            {/* Preview Area */}
+            {/* Preview Area */} 
             <motion.div 
               className="preview-area"
               initial={{ opacity: 0, x: 30 }}
@@ -409,7 +409,7 @@ export default function Analysis() {
         </div>
       </section>
 
-      {/* Results Section */}
+      {/* Results Section */} 
       {analysisResult && (
         <motion.section 
           className="results-section"
@@ -454,7 +454,7 @@ export default function Analysis() {
 
               <div className="results-footer">
                 <p className="disclaimer">
-                  This analysis is for informational purposes only and should not replace professional medical advice.
+                  This analysis is for informational purposes only and should not replace professional medical advice. 
                   Always consult with a healthcare provider for diagnosis and treatment.
                 </p>
                 <button 
@@ -476,7 +476,7 @@ export default function Analysis() {
         </motion.section>
       )}
 
-      {/* Error Message */}
+      {/* Error Message */} 
       {error && (
         <motion.div 
           className="error-message"

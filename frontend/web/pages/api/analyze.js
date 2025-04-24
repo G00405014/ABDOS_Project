@@ -1,7 +1,6 @@
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
 import FormData from 'form-data';
 
 // Disable the default body parser to handle form data
@@ -49,23 +48,28 @@ export default async function handler(req, res) {
     
     // Send the image to the Flask backend API
     try {
-      const response = await axios.post('http://localhost:5000/predict', formData, {
+      const response = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
         headers: {
           ...formData.getHeaders(),
         },
-        // Increase timeout for large images
-        timeout: 30000,
+        body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const responseData = await response.json();
       console.log('API route: Received response from backend API:', response.status);
-      console.log('API route: Response data:', JSON.stringify(response.data));
+      console.log('API route: Response data:', JSON.stringify(responseData));
       
       // Check if the response contains an error
-      if (response.data.error) {
-        console.error('API route: Backend returned an error:', response.data.error);
+      if (responseData.error) {
+        console.error('API route: Backend returned an error:', responseData.error);
         return res.status(500).json({ 
-          error: response.data.error,
-          details: response.data.details || 'No additional details provided'
+          error: responseData.error,
+          details: responseData.details || 'No additional details provided'
         });
       }
       
@@ -111,7 +115,7 @@ export default async function handler(req, res) {
       };
 
       // Get the predicted class and confidence from the model response
-      const { predicted_class, confidence } = response.data;
+      const { predicted_class, confidence } = responseData;
       console.log(`API route: Prediction result - Class: ${predicted_class}, Confidence: ${confidence}`);
       
       // Prepare the enhanced response
@@ -144,23 +148,19 @@ export default async function handler(req, res) {
       }
       
       // Handle different types of errors
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('API route: Backend API error:', error.response.status, error.response.data);
-        return res.status(error.response.status).json({ 
-          error: error.response.data.error || 'Backend API error',
-          details: error.response.data.details || JSON.stringify(error.response.data)
-        });
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('API route: Backend service unavailable - no response received');
+      if (error.name === 'FetchError') {
+        console.error('API route: Backend service unavailable:', error.message);
         return res.status(503).json({ 
           error: 'Backend service unavailable', 
           details: 'Could not connect to the analysis service. Please make sure the backend server is running.' 
         });
+      } else if (error.message.includes('HTTP error!')) {
+        console.error('API route: Backend API error:', error.message);
+        return res.status(500).json({ 
+          error: 'Backend API error',
+          details: error.message
+        });
       } else {
-        // Something happened in setting up the request that triggered an Error
         console.error('API route: Internal server error:', error.message);
         return res.status(500).json({ 
           error: 'Internal server error', 

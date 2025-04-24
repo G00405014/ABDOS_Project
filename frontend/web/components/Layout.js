@@ -2,9 +2,12 @@ import Head from 'next/head';
 import Header from './Header';
 import Footer from './Footer';
 import { useTheme } from '../context/ThemeContext';
+import { useRouter } from 'next/router';
 
 export default function Layout({ children, title = 'Skin Cancer Detection | ABDOS' }) {
   const { isDarkMode } = useTheme();
+  const router = useRouter();
+  const isAuthPage = router.pathname === '/login' || router.pathname === '/register';
 
   return (
     <div className={`app-layout ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
@@ -16,13 +19,13 @@ export default function Layout({ children, title = 'Skin Cancer Detection | ABDO
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header />
+      {!isAuthPage && <Header />}
       
-      <main className="main-content">
+      <main className={`main-content ${isAuthPage ? 'auth-page' : ''}`}>
         {children}
       </main>
       
-      <Footer />
+      {!isAuthPage && <Footer />}
 
       <style jsx>{`
         .app-layout {
@@ -39,6 +42,10 @@ export default function Layout({ children, title = 'Skin Cancer Detection | ABDO
           width: 100%;
           max-width: 100%;
           overflow-x: hidden;
+        }
+
+        .main-content.auth-page {
+          padding-top: 0;
         }
 
         @media (max-width: 768px) {
