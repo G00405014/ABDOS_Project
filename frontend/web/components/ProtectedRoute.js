@@ -7,13 +7,11 @@ const ProtectedRoute = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // If not loading and user is not logged in, redirect to login
     if (!loading && !user) {
-      router.push('/login');
+      router.push('/auth?redirect=' + router.pathname);
     }
   }, [user, loading, router]);
 
-  // While loading, show a loading indicator or null
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -22,13 +20,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // If user is logged in, render the children components
-  if (user) {
-    return <>{children}</>;
-  }
-
-  // If user is not logged in (after loading), return null or redirect (handled by useEffect)
-  return null;
+  return user ? children : null;
 };
 
 export default ProtectedRoute; 

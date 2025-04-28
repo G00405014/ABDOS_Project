@@ -20,6 +20,15 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  // Add API proxy configuration
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:3001/api/:path*',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig 

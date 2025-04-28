@@ -69,7 +69,6 @@ export default function About() {
               transition={{ duration: 0.8 }}
             >
               <div className="image-container">
-                <img src="/images/mission.jpg" alt="Our Mission" />
                 <div className="image-overlay"></div>
               </div>
             </motion.div>

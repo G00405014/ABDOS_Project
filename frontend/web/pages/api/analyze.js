@@ -2,6 +2,7 @@ import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
+import axios from 'axios';
 
 // Disable the default body parser to handle form data
 export const config = {
@@ -41,32 +42,32 @@ export default async function handler(req, res) {
     
     // Create form data for the API request
     const formData = new FormData();
+    // Create a readable stream from the file
     const fileStream = fs.createReadStream(imageFile.filepath);
-    formData.append('image', fileStream);
+    formData.append('image', fileStream, {
+      filename: imageFile.originalFilename,
+      contentType: imageFile.mimetype
+    });
 
-    console.log('API route: Sending request to backend API at http://localhost:5000/predict');
+    console.log('API route: Sending request to Flask API using axios');
     
-    // Send the image to the Flask backend API
     try {
-      const response = await fetch('http://localhost:5000/predict', {
-        method: 'POST',
+      // Use axios instead of fetch
+      const response = await axios.post('http://localhost:5000/predict', formData, {
         headers: {
           ...formData.getHeaders(),
         },
-        body: formData,
+        // Increase timeout for large images
+        timeout: 30000,
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const responseData = await response.json();
-      console.log('API route: Received response from backend API:', response.status);
+      
+      const responseData = response.data;
+      console.log('API route: Received response from Flask API:', response.status);
       console.log('API route: Response data:', JSON.stringify(responseData));
       
       // Check if the response contains an error
       if (responseData.error) {
-        console.error('API route: Backend returned an error:', responseData.error);
+        console.error('API route: Flask returned an error:', responseData.error);
         return res.status(500).json({ 
           error: responseData.error,
           details: responseData.details || 'No additional details provided'
@@ -148,19 +149,29 @@ export default async function handler(req, res) {
       }
       
       // Handle different types of errors
-      if (error.name === 'FetchError') {
-        console.error('API route: Backend service unavailable:', error.message);
+      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        console.error('API route: Flask service unavailable:', error.message);
         return res.status(503).json({ 
-          error: 'Backend service unavailable', 
-          details: 'Could not connect to the analysis service. Please make sure the backend server is running.' 
+          error: 'Flask service unavailable', 
+          details: 'Could not connect to the analysis service. Please make sure the Flask server is running.' 
         });
-      } else if (error.message.includes('HTTP error!')) {
-        console.error('API route: Backend API error:', error.message);
-        return res.status(500).json({ 
-          error: 'Backend API error',
+      } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('API route: Flask API error:', error.response.status, error.response.data);
+        return res.status(error.response.status).json({ 
+          error: 'Flask API error',
+          details: error.response.data || error.message
+        });
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('API route: No response received:', error.message);
+        return res.status(504).json({
+          error: 'No response from Flask API',
           details: error.message
         });
       } else {
+        // Something happened in setting up the request that triggered an Error
         console.error('API route: Internal server error:', error.message);
         return res.status(500).json({ 
           error: 'Internal server error', 

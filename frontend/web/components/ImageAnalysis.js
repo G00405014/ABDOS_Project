@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import ReportService from '../services/reportService';
 
 const ImageAnalysis = () => {
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [analysis, setAnalysis] = useState(null);
@@ -129,22 +131,112 @@ const ImageAnalysis = () => {
     }
   };
 
+  // Check backend health
+  const checkBackendHealth = async () => {
+    try {
+      setIsTestingConnection(true);
+      setConnectionStatus(null);
+      setError(null);
+      
+      console.log('Checking backend health...');
+      const response = await fetch('/api/health-check');
+      
+      const result = await response.json();
+      console.log('Backend health check result:', result);
+      
+      if (result.status === 'success') {
+        setConnectionStatus({
+          success: true,
+          message: 'Backend server is running correctly',
+          details: result.details
+        });
+        return true;
+      } else {
+        setConnectionStatus({
+          success: false,
+          message: 'Backend server is not responding correctly',
+          error: result.error || 'Unknown error'
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Backend health check failed:', error);
+      setConnectionStatus({
+        success: false,
+        message: 'Failed to connect to the backend server',
+        error: error.message
+      });
+      return false;
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
+
   const handleGenerateReport = async (analysisResult) => {
     try {
       setIsGeneratingReport(true);
+      setError(null);
       
-      const patientInfo = {
-        name: 'John Doe', // This should come from user authentication
-        date: new Date().toISOString(),
-        email: 'patient@example.com'
-      };
+      // Verify user authentication
+      if (!user) {
+        throw new Error('You must be logged in to generate a report');
+      }
       
-      await ReportService.generateReport(analysisResult, patientInfo);
+      // Check if token exists in localStorage
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
       
-      alert('Report generated successfully!');
+      console.log('Authenticated as:', user.name, 'with token available');
+      
+      // First check if the backend server is running
+      const isBackendHealthy = await checkBackendHealth();
+      if (!isBackendHealthy) {
+        throw new Error('Backend server is not running or not accessible. Please make sure the Flask server is running.');
+      }
+      
+      const report = await ReportService.generateReport(analysisResult, {
+        name: user?.name || 'User',
+        email: user?.email || 'user@example.com'
+      });
+      
+      // Show the report in a modal or new window
+      const reportWindow = window.open('', '_blank');
+      reportWindow.document.write(`
+        <html>
+          <head>
+            <title>ABDOS Analysis Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              h1 { color: #2c5282; }
+              .report-section { margin-bottom: 20px; }
+              .recommendations { margin-top: 20px; }
+              ul { padding-left: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>ABDOS Analysis Report</h1>
+            <div class="report-section">
+              <h2>Diagnosis: ${report.diagnosis}</h2>
+              <p>Confidence: ${report.confidence}</p>
+              <p>${report.description}</p>
+            </div>
+            <div class="recommendations">
+              <h2>Recommendations:</h2>
+              <ul>
+                ${Array.isArray(report.recommendations) 
+                  ? report.recommendations.map(rec => `<li>${rec}</li>`).join('') 
+                  : `<li>${report.recommendations}</li>`}
+              </ul>
+            </div>
+          </body>
+        </html>
+      `);
+      reportWindow.document.close();
     } catch (error) {
       console.error('Failed to generate report:', error);
-      alert('Failed to generate report. Please try again.');
+      setError('Failed to generate report: ' + error.message);
     } finally {
       setIsGeneratingReport(false);
     }

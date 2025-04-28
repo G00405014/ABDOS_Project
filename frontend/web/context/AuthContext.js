@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       // Send token in Authorization header
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch('/api/auth/profile', {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -43,7 +43,12 @@ export const AuthProvider = ({ children }) => {
       
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
+        setUser({
+          id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role
+        });
       } else {
           // If token is invalid/expired, clear it
           localStorage.removeItem('accessToken');
@@ -66,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setError(null);
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,10 +87,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Store token and set user
-      if (data.access_token) {
-           localStorage.setItem('accessToken', data.access_token);
+      if (data.token) {
+           localStorage.setItem('accessToken', data.token);
       }
-      setUser(data.user || null); // Use user data from response
+      
+      setUser({
+        id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      });
+      
       return data;
     } catch (error) {
       setError(error.message);
@@ -102,32 +114,40 @@ export const AuthProvider = ({ children }) => {
       const requestBody = { name, email, password }; 
       console.log('[AuthContext] Sending registration body:', requestBody);
       
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // No credentials: include needed here
         body: JSON.stringify(requestBody), 
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
+
+      const data = await response.json();
+      console.log('[AuthContext] Registration response:', data);
 
       // Store token and set user after successful registration
-       if (data.access_token) {
-           localStorage.setItem('accessToken', data.access_token);
+      if (data.token) {
+        localStorage.setItem('accessToken', data.token);
       }
-      setUser(data.user || null); 
+      
+      setUser({
+        id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      });
+      
       return data;
       
     } catch (error) {
       setError(error.message);
       console.error("[AuthContext] Registration fetch error:", error);
-      localStorage.removeItem('accessToken'); // Clear token on failed registration
+      localStorage.removeItem('accessToken');
       setUser(null);
       throw error;
     }
@@ -142,7 +162,7 @@ export const AuthProvider = ({ children }) => {
      // Attempt to notify backend (optional, might fail if token already invalid)
      if (token) {
          try {
-            await fetch('http://localhost:5000/api/auth/logout', {
+            await fetch('/api/auth/logout', {
                 method: 'POST',
                  headers: {
                     'Authorization': `Bearer ${token}`

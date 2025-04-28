@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../components/Layout';
 import Link from 'next/link'; // Import Link for navigation
+import ReportService from '../services/reportService';
 
 function MyProfilePage() {
   const { user, setUser, getToken } = useAuth();
@@ -14,10 +15,13 @@ function MyProfilePage() {
   const [editError, setEditError] = useState(null);
   const [editSuccess, setEditSuccess] = useState(null);
   
-  // State for history
+  // State for history and reports
   const [history, setHistory] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportError, setReportError] = useState(null);
   
   // Update editName if user context changes (e.g., after initial load)
   useEffect(() => {
@@ -34,7 +38,7 @@ function MyProfilePage() {
         setIsLoadingHistory(true);
         setHistoryError(null);
         try {
-          const response = await fetch(`http://localhost:5000/history/${user.id}`, {
+          const response = await fetch(`/api/analysis`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -80,7 +84,7 @@ function MyProfilePage() {
     }
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -116,6 +120,79 @@ function MyProfilePage() {
     setEditName(user?.name || ''); // Reset edit field
     setEditError(null);
     setEditSuccess(null);
+  };
+
+  // Check backend health
+  const checkBackendHealth = async () => {
+    try {
+      // Show loading state
+      setIsGeneratingReport(true);
+      setReportError(null);
+      
+      console.log('Checking backend health...');
+      const response = await fetch('/api/health-check');
+      
+      const result = await response.json();
+      console.log('Backend health check result:', result);
+      
+      if (result.status === 'success') {
+        return true;
+      } else {
+        setReportError(`Backend server issue: ${result.error || 'Unknown error'}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Backend health check failed:', error);
+      setReportError(`Failed to connect to backend: ${error.message}`);
+      return false;
+    }
+  };
+
+  // Generate Report
+  const generateReport = async (historyItem) => {
+    setIsGeneratingReport(true);
+    setReportError(null);
+    setSelectedReport(null);
+    
+    try {
+      // Verify user authentication
+      if (!user) {
+        throw new Error('You must be logged in to generate a report');
+      }
+      
+      // Get auth token
+      const token = getToken();
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      console.log('Authenticated as:', user.name, 'with token:', token.substring(0, 10) + '...');
+      
+      // First check if the backend server is running
+      const isBackendHealthy = await checkBackendHealth();
+      if (!isBackendHealthy) {
+        console.warn('Backend health check failed, will use fallback report generation');
+      }
+      
+      // Use the ReportService to generate the report (will use fallback if API fails)
+      const report = await ReportService.generateReport(
+        {
+          condition: historyItem.class_name,
+          confidence: historyItem.confidence
+        },
+        {
+          name: user?.name || 'User',
+          email: user?.email || 'user@example.com'
+        }
+      );
+      
+      setSelectedReport(report);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setReportError(error.message || 'Failed to generate report. Please try again.');
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   return (
@@ -194,37 +271,66 @@ function MyProfilePage() {
             </form> 
           </div>
 
-          {/* Analysis History Card (Delete functionality not added yet) */}
+          {/* History Section */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 dark:text-white">Analysis History</h2>
-            {isLoadingHistory && <p className="text-gray-600 dark:text-gray-400">Loading history...</p>}
-            {historyError && <p className="text-red-500">Error loading history: {historyError}</p>}
-            {!isLoadingHistory && !historyError && (
-              history.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-400">You haven't performed any analyses yet.</p>
-              ) : (
-                <ul className="space-y-4">
-                  {history.map((item, index) => (
-                    <li key={item._id || index} className="border-b border-gray-200 dark:border-gray-700 pb-4 flex justify-between items-start">
-                       <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Date: {new Date(item.timestamp).toLocaleString()}</p>
-                            <p className="font-medium text-gray-800 dark:text-gray-200">Result: {item.label} ({item.confidence}%)</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Image: {item.image_name}</p>
-                       </div>
-                       {/* Placeholder for Delete Button */}
-                       <button disabled className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 ml-4 mt-1">
-                           Delete (Soon)
-                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )
+            <h2 className="text-xl font-semibold mb-4 dark:text-white">Scan History</h2>
+            
+            {isLoadingHistory ? (
+              <p className="text-gray-600 dark:text-gray-400">Loading history...</p>
+            ) : historyError ? (
+              <p className="text-red-600">{historyError}</p>
+            ) : history.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400">No scan history available</p>
+            ) : (
+              <div className="space-y-4">
+                {history.map((item, index) => (
+                  <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-900 dark:text-white">
+                          {item.class_name} (Confidence: {(item.confidence * 100).toFixed(2)}%)
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(item.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => generateReport(item)}
+                        disabled={isGeneratingReport}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {isGeneratingReport ? 'Generating...' : 'Generate Report'}
+                      </button>
+                    </div>
+                    
+                    {reportError && (
+                      <p className="mt-2 text-red-600 text-sm">{reportError}</p>
+                    )}
+                    
+                    {selectedReport && selectedReport.diagnosis === item.class_name && (
+                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                          {selectedReport.diagnosis} Report
+                        </h4>
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">
+                          {selectedReport.description}
+                        </p>
+                        <div className="mt-2">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-1">
+                            Recommendations:
+                          </h5>
+                          <ul className="list-disc list-inside text-gray-700 dark:text-gray-300">
+                            {selectedReport.recommendations.map((rec, i) => (
+                              <li key={i}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
-            <div className="mt-6">
-                <Link href="/analysis" className="text-indigo-600 dark:text-indigo-400 hover:underline">
-                    Perform New Analysis
-                </Link>
-            </div>
           </div>
         </div>
       </Layout>
