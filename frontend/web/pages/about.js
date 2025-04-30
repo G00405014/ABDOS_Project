@@ -52,7 +52,7 @@ export default function About() {
                   <div className="stat-label">Detection Accuracy</div>
                 </div>
                 <div className="stat-item">
-                  <div className="stat-value">100K+</div>
+                  <div className="stat-value">10K+</div>
                   <div className="stat-label">Images Analyzed</div>
                 </div>
                 <div className="stat-item">

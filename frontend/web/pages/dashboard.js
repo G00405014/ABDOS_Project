@@ -270,68 +270,6 @@ function MyProfilePage() {
               )}
             </form> 
           </div>
-
-          {/* History Section */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 dark:text-white">Scan History</h2>
-            
-            {isLoadingHistory ? (
-              <p className="text-gray-600 dark:text-gray-400">Loading history...</p>
-            ) : historyError ? (
-              <p className="text-red-600">{historyError}</p>
-            ) : history.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">No scan history available</p>
-            ) : (
-              <div className="space-y-4">
-                {history.map((item, index) => (
-                  <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">
-                          {item.class_name} (Confidence: {(item.confidence * 100).toFixed(2)}%)
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(item.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => generateReport(item)}
-                        disabled={isGeneratingReport}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                      >
-                        {isGeneratingReport ? 'Generating...' : 'Generate Report'}
-                      </button>
-                    </div>
-                    
-                    {reportError && (
-                      <p className="mt-2 text-red-600 text-sm">{reportError}</p>
-                    )}
-                    
-                    {selectedReport && selectedReport.diagnosis === item.class_name && (
-                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          {selectedReport.diagnosis} Report
-                        </h4>
-                        <p className="text-gray-700 dark:text-gray-300 mb-2">
-                          {selectedReport.description}
-                        </p>
-                        <div className="mt-2">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-1">
-                            Recommendations:
-                          </h5>
-                          <ul className="list-disc list-inside text-gray-700 dark:text-gray-300">
-                            {selectedReport.recommendations.map((rec, i) => (
-                              <li key={i}>{rec}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </Layout>
     </ProtectedRoute>

@@ -7,13 +7,11 @@ from flask_cors import CORS
 import io
 import os
 import time
-from database import init_db
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 import re
-from class_balancer import adjust_predictions, get_top_n_predictions, CLASS_NAMES
 
 app = Flask(__name__)
 
@@ -23,9 +21,6 @@ CORS(app,
      origins=["http://localhost:3000", "http://localhost:3001"], 
      supports_credentials=True
 )
-
-# Initialize MongoDB
-mongo = init_db(app)
 
 # Initialize JWT
 app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
@@ -49,43 +44,16 @@ class Preprocessing(tf.keras.layers.Layer):
         base_config = super(Preprocessing, self).get_config()
         return base_config
 
-# Load the model with custom preprocessing layer
-model_path = os.path.join(os.getcwd(), "models", "skin_condition", "1", "model.keras")
-custom_objects = {'Preprocessing': Preprocessing}
+# Set the model path to only use the user's downloaded model
+MODEL_PATH = r"C:\Users\User\Downloads\skin_cancer_model.h5"
 
+# Load the model at startup
 try:
-    # Set memory growth to avoid TF claiming all GPU memory
-    physical_devices = tf.config.list_physical_devices('GPU')
-    for device in physical_devices:
-        tf.config.experimental.set_memory_growth(device, True)
-except:
-    pass
-
-try:
-    print(f"Attempting to load model from: {model_path}")
-    try:
-        model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
-        print("Model loaded successfully!")
-    except Exception as e:
-        print(f"Failed to load model: {str(e)}")
-        print("Creating a dummy model for testing...")
-        # Create a simple model for testing
-        model = tf.keras.Sequential([
-            tf.keras.layers.Input(shape=(224, 224, 3)),
-            tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(7, activation='softmax')
-        ])
-        model.compile(optimizer='adam', loss='categorical_crossentropy')
-        print("Dummy model created for testing purposes")
-
+    print(f"Loading model from: {MODEL_PATH}")
+    model = load_model(MODEL_PATH)
+    print("Model loaded successfully!")
 except Exception as e:
-    print(f"Error loading model: {str(e)}")
-    print(f"Model path: {model_path}")
-    print(f"Current working directory: {os.getcwd()}")
-    import traceback
-    traceback.print_exc()
+    print(f"Failed to load model from {MODEL_PATH}: {e}")
     model = None
 
 @app.route('/health', methods=['GET'])
@@ -94,7 +62,7 @@ def health_check():
         return jsonify({
             'status': 'error',
             'message': 'Model not loaded',
-            'model_path': model_path
+            'model_path': MODEL_PATH
         }), 503
     return jsonify({
         'status': 'healthy',
@@ -146,85 +114,48 @@ def predict():
             'Vascular Lesions'
         ]
         
-        # Apply EXTREME temperature scaling to force more peaked distribution
-        temperature = 0.1  # Changed from 0.5 to 0.1 for even more aggressive scaling
-        scaled_predictions = predictions / temperature
-        probabilities = tf.nn.softmax(scaled_predictions).numpy()[0]
+        # Get raw probabilities from model and ensure they sum to 1
+        probabilities = predictions[0]
+        probabilities = probabilities / np.sum(probabilities)  # Normalize to ensure sum is 1
         
-        print(f"Original probabilities before adjustment: {[round(p*100, 2) for p in probabilities]}")
-        print(f"Original prediction: {np.argmax(probabilities)} - {conditions[np.argmax(probabilities)]}")
+        print(f"Model probabilities: {[round(p*100, 2) for p in probabilities]}")
+        print(f"Prediction: {np.argmax(probabilities)} - {conditions[np.argmax(probabilities)]}")
         
-        # Apply class-specific thresholds to counteract imbalance
-        adjusted_probabilities = adjust_predictions(probabilities)
+        # Get predicted class and confidence
+        predicted_class = np.argmax(probabilities)
+        confidence_pct = float(probabilities[predicted_class] * 100)
         
-        print(f"Adjusted probabilities: {[round(p*100, 2) for p in adjusted_probabilities]}")
-        print(f"Adjusted prediction: {np.argmax(adjusted_probabilities)} - {conditions[np.argmax(adjusted_probabilities)]}")
-        
-        # Get predicted class from adjusted probabilities
-        predicted_class = np.argmax(adjusted_probabilities)
-        
-        # Process both original and adjusted probabilities for comparison
+        # Process probabilities for all conditions
         all_probabilities = {}
-        adjusted_all_probabilities = {}
-        
         for i, condition in enumerate(conditions):
-            # Original probabilities
             prob = float(probabilities[i] * 100)
             if prob < 1.0:
                 prob = 0.0
             all_probabilities[condition] = round(prob, 2)
-            
-            # Adjusted probabilities
-            adj_prob = float(adjusted_probabilities[i] * 100)
-            if adj_prob < 1.0:
-                adj_prob = 0.0
-            adjusted_all_probabilities[condition] = round(adj_prob, 2)
         
-        confidence_pct = adjusted_all_probabilities[conditions[predicted_class]]
+        # Get top 3 predictions
+        top_indices = np.argsort(probabilities)[-3:][::-1]
+        top_predictions = [
+            (conditions[idx], probabilities[idx] * 100) for idx in top_indices
+        ]
+        top_pred_info = [f"{name} ({conf:.2f}%)" for name, conf in top_predictions]
+        print(f"Top 3 predictions: {', '.join(top_pred_info)}")
         
-        # Get top 3 predictions for debugging
-        top_predictions = get_top_n_predictions(adjusted_probabilities, 3)
-        top_pred_info = [f"{CLASS_NAMES[idx]} ({prob*100:.2f}%)" for idx, name, prob in top_predictions]
-        print(f"Top 3 predictions after adjustment: {', '.join(top_pred_info)}")
-        
-        # GUARANTEED OVERRIDE: Forcefully use a different class every time for testing UI
-        # This is a temporary measure to ensure all classes get represented
-        print("APPLYING GUARANTEED OVERRIDE FOR TESTING")
-        
-        # Use the current timestamp to cycle through all classes
-        current_time = int(time.time())
-        forced_class = current_time % len(conditions)
-        
-        print(f"Forcing prediction to class {forced_class} ({conditions[forced_class]}) for testing")
-        
-        # Override predicted class and probabilities
-        original_predicted_class = predicted_class
-        predicted_class = forced_class
-        
-        # Create an artificial probability distribution favoring the forced class
-        artificial_probs = np.zeros_like(adjusted_probabilities)
-        artificial_probs[forced_class] = 0.8  # 80% confidence in forced class
-        # Distribute remaining 20% among other classes
-        remaining = 0.2 / (len(conditions) - 1)
-        for i in range(len(artificial_probs)):
-            if i != forced_class:
-                artificial_probs[i] = remaining
-        
-        # Update adjusted probabilities
-        adjusted_probabilities = artificial_probs
-        
-        # Update probability dictionaries
-        for i, condition in enumerate(conditions):
-            adjusted_all_probabilities[condition] = round(float(adjusted_probabilities[i] * 100), 2)
-        
-        confidence_pct = adjusted_all_probabilities[conditions[predicted_class]]
-        print(f"Forced override applied. New prediction: {conditions[predicted_class]} with {confidence_pct}% confidence")
+        # Prepare response
+        response = {
+            'predicted_class': int(predicted_class),
+            'class_name': conditions[predicted_class],
+            'confidence': confidence_pct,
+            'probabilities': all_probabilities,
+            'top_predictions': top_predictions,
+            'timestamp': datetime.now(timezone.utc),
+        }
         
         # Store the prediction in MongoDB
         prediction_data = {
             # Store the ObjectId if conversion was successful
             'user_id': user_object_id, 
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'predicted_class': int(predicted_class),
             'confidence': confidence_pct,
             'label': conditions[predicted_class],
@@ -245,15 +176,7 @@ def predict():
             print("No valid user_id provided, prediction result not saved to history.")
             
         # Return prediction results regardless of saving success
-        return jsonify({
-            'predicted_class': int(predicted_class),
-            'confidence': confidence_pct,
-            'label': conditions[predicted_class],
-            'original_probabilities': all_probabilities,
-            'adjusted_probabilities': adjusted_all_probabilities,
-            'is_adjusted': True,
-            'adjustment_applied': 'Class balancing to counteract dataset imbalance'
-        })
+        return jsonify(response)
         
     except Exception as e:
         print(f"Error during prediction: {e}")
@@ -329,7 +252,7 @@ def register():
             'name': name,
             'email': email,
             'password': hashed_password, # Store the hash
-            'created_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc)
         }
         
         print(f"Attempting to insert user document for {email}") # Log before insert
@@ -442,7 +365,7 @@ def update_profile():
             return jsonify({'message': 'No valid fields provided for update'}), 400
             
         # Add updated_at timestamp
-        update_fields['updated_at'] = datetime.utcnow()
+        update_fields['updated_at'] = datetime.now(timezone.utc)
         
         print(f"Attempting to update profile for {current_user_email} with: {update_fields}")
         result = mongo.db.users.update_one(

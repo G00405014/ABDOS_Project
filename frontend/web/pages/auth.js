@@ -120,12 +120,10 @@ export default function AuthPage() {
         {/* Main content container */}
         <div className="relative w-full max-w-lg px-4 py-12 flex flex-col items-center z-10">
           {/* Logo */}
-          <div className="text-center mb-10">
-            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-xl shadow-lg mb-6 ${theme === 'dark' 
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
-              : 'bg-gradient-to-br from-indigo-600 to-purple-700'}`}>
-              {/* 'A' removed from logo */}
-            </div>
+          <div className="text-center mb-8">
+            <h1 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              ABDOS
+            </h1>
             <p className={`text-base sm:text-lg font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
               {isLoginView ? 'Welcome back, please sign in' : 'Create your account'}
             </p>
@@ -139,9 +137,6 @@ export default function AuthPage() {
               <div className={`mb-7 p-4 text-base font-medium rounded-lg flex items-start ${theme === 'dark' 
                 ? 'bg-red-900/30 border border-red-700 text-red-100' 
                 : 'bg-red-50 border border-red-200 text-red-600'}`}>
-                <svg className={`h-6 w-6 mr-3 mt-0.5 flex-shrink-0 ${theme === 'dark' ? 'text-red-300' : 'text-red-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
                 <span>{error}</span>
               </div>
             )}

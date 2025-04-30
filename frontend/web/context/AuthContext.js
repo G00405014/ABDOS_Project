@@ -76,7 +76,6 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        // No credentials: include needed here
         body: JSON.stringify({ email, password }),
       });
 
@@ -87,21 +86,27 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Store token and set user
-      if (data.token) {
-           localStorage.setItem('accessToken', data.token);
+      if (data.access_token) {
+        localStorage.setItem('accessToken', data.access_token);
+        // Also store as token for compatibility
+        localStorage.setItem('token', data.access_token);
+      } else if (data.token) {
+        localStorage.setItem('accessToken', data.token);
+        localStorage.setItem('token', data.token);
       }
-      
+      // Fallback: use data.user or data itself
+      const user = data.user || data;
       setUser({
-        id: data._id,
-        name: data.name,
-        email: data.email,
-        role: data.role
+        id: user.id || user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role || 'user'
       });
       
       return data;
     } catch (error) {
       setError(error.message);
-      localStorage.removeItem('accessToken'); // Clear token on failed login
+      localStorage.removeItem('accessToken');
       setUser(null);
       throw error;
     }
@@ -122,24 +127,28 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(requestBody), 
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
-      }
-
       const data = await response.json();
-      console.log('[AuthContext] Registration response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
 
       // Store token and set user after successful registration
-      if (data.token) {
+      if (data.access_token) {
+        localStorage.setItem('accessToken', data.access_token);
+        // Also store as token for compatibility
+        localStorage.setItem('token', data.access_token);
+      } else if (data.token) {
         localStorage.setItem('accessToken', data.token);
+        localStorage.setItem('token', data.token);
       }
-      
+      // Fallback: use data.user or data itself
+      const user = data.user || data;
       setUser({
-        id: data._id,
-        name: data.name,
-        email: data.email,
-        role: data.role
+        id: user.id || user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role || 'user'
       });
       
       return data;

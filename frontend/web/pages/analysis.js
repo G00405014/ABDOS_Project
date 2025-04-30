@@ -73,8 +73,16 @@ export default function Analysis() {
       
       // Save the analysis result to the database
       setIsSaving(true);
-      await saveAnalysisResult(selectedImage, result);
-      setIsSaving(false);
+      try {
+        await saveAnalysisResult(selectedImage, result);
+        console.log('Analysis result saved successfully');
+      } catch (err) {
+        console.error('Error saving analysis result:', err);
+        // Show error but don't block displaying the results
+        setError(err.message || 'Could not save analysis result. Your results are still available but will not be saved to your history.');
+      } finally {
+        setIsSaving(false);
+      }
     } catch (err) {
       console.error('Analysis error:', err);
       setError('An error occurred during analysis. Please try again.');
@@ -313,11 +321,6 @@ export default function Analysis() {
           >
             <div className="container">
               <div className="error-content">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
                 <p>{error}</p>
               </div>
             </div>

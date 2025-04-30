@@ -55,29 +55,28 @@ class ReportService {
   }
   
   static generateLocalReport(disease, confidence) {
-    // Generate a local report without requiring the backend
-    console.log('Generating local report for', disease, 'with confidence', confidence);
-    
-    // Standardize disease name
-    const diseaseLower = disease.toLowerCase().trim();
+    // Ensure disease is a string before calling toLowerCase
+    const diseaseLower = (disease && typeof disease === 'string') ? disease.toLowerCase() : '';
+    // Ensure confidence is a number
+    const safeConfidence = (typeof confidence === 'number' && !isNaN(confidence)) ? confidence : 0;
     
     // Report templates for different conditions
     const reports = {
       'melanoma': {
         diagnosis: 'Melanoma',
-        description: 'Serious type of skin cancer detected.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        description: 'Most dangerous form of skin cancer.',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
-          'Urgent dermatologist consultation required',
-          'Immediate biopsy confirmation needed',
-          'Surgical intervention likely necessary',
-          'Regular monitoring and follow-up essential'
+          'Consult with a dermatologist',
+          'Schedule a biopsy',
+          'Monitor for changes',
+          'Practice sun protection'
         ]
       },
       'melanocytic nevi': {
         diagnosis: 'Melanocytic Nevi',
         description: 'Common mole detected. Generally benign but should be monitored for changes.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'Regular monitoring recommended',
           'Consider removal if changing in appearance',
@@ -88,7 +87,7 @@ class ReportService {
       'basal cell carcinoma': {
         diagnosis: 'Basal Cell Carcinoma',
         description: 'Most common type of skin cancer. Typically grows slowly and rarely spreads to other parts of the body.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'Consult with a dermatologist',
           'Treatment options include surgery, radiation, or topical medications',
@@ -99,7 +98,7 @@ class ReportService {
       'actinic keratoses': {
         diagnosis: 'Actinic Keratoses',
         description: 'Rough, scaly patches caused by sun damage. Potential precursor to skin cancer.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'Consult with a dermatologist',
           'Treatment options include cryotherapy, topical medications, or photodynamic therapy',
@@ -110,7 +109,7 @@ class ReportService {
       'vascular lesions': {
         diagnosis: 'Vascular Lesions',
         description: 'Blood vessel-related skin marks detected.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'Consult with dermatologist',
           'Consider laser treatment if desired',
@@ -121,7 +120,7 @@ class ReportService {
       'dermatofibroma': {
         diagnosis: 'Dermatofibroma',
         description: 'Common non-cancerous skin growths that are usually harmless.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'No treatment typically necessary',
           'Can be removed for cosmetic reasons if desired',
@@ -132,7 +131,7 @@ class ReportService {
       'benign keratosis': {
         diagnosis: 'Benign Keratosis',
         description: 'Non-cancerous growths that appear as waxy, scaly raised areas on the skin.',
-        confidence: (confidence * 100).toFixed(2) + '%',
+        confidence: (safeConfidence * 100).toFixed(2) + '%',
         recommendations: [
           'No treatment necessary in most cases',
           'Can be removed for cosmetic reasons',
@@ -144,9 +143,9 @@ class ReportService {
     
     // Get the report for the detected disease, default to unknown if not found
     return reports[diseaseLower] || {
-      diagnosis: disease,
+      diagnosis: disease || 'Unknown',
       description: 'The detected condition requires further evaluation.',
-      confidence: (confidence * 100).toFixed(2) + '%',
+      confidence: (safeConfidence * 100).toFixed(2) + '%',
       recommendations: [
         'Consult with a dermatologist',
         'Further diagnostic tests may be needed',
